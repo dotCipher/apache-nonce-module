@@ -1,6 +1,16 @@
 /*A hello world module to test
 *adding/modifying content using 
-*existing mod_filter functionality
+*existing mod_filter 
+
+To-do's:
+- Implement some modification of data in the bucket brigade iterator 
+to test output to make sure it works.
+- Test adding a header to r->headers_out table with and without creating a bucket
+- Add logic to generate nonce, hash, and base64 encode.
+- Continue looking at mod_txt.c to figure out best way to search-and-replace
+text in the file (e.g. combine all buckets into one buffer and search?  HTML parsing library?
+Is there html parsing functionality in apache already?)
+- 
 */
 
 #include <httpd.h>
@@ -99,7 +109,10 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
         1. Find script nonce key in file
         2. Replace with base 64 encoded hash digest of our nonce
         3. Keep track of how much we increase the size of the file. 
-        We shouldn't hardcode the length of the key, but we may have to*/
+        We shouldn't hardcode the length of the key, but we may have to
+        */
+
+        //Right now this filters output and converts all characters to upper case.
         buf = apr_bucket_alloc(len, c->bucket_alloc);
         for(n=0 ; n < len ; ++n)
             buf[n] = apr_toupper(data[n]);
