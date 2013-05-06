@@ -21,6 +21,9 @@ Is there html parsing functionality in apache already?) --
 #include <apr_lib.h>
 #include <util_filter.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "nonce_gen/nonce_rand.c"
 
 //This is how we tell the server the name of our filter
 static const char s_szHelloFilterName[]="HelloFilter";
@@ -81,7 +84,13 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 
 	//Let's allocate some space for our output bucket brigade
 	pbbOut=apr_brigade_create(r->pool, c->bucket_alloc);
-
+	
+	// Assign variable to use for nonce_gen
+	char *nonce;
+	nonce = nonce_rand_gen();
+	printf(nonce);
+	free(nonce);
+	
 	//Assign the current bucket to hbktIn (this will always be the case unless there are
 	//no more buckets bc we remove them from the incoming bucket brigade each iteration)
 	   for (hbktIn = APR_BRIGADE_FIRST(pbbIn);
