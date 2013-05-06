@@ -9,7 +9,8 @@ to test output to make sure it works.
 - Add logic to generate nonce, hash, and base64 encode.
 - Continue looking at mod_txt.c to figure out best way to search-and-replace
 text in the file (e.g. combine all buckets into one buffer and search?  HTML parsing library?
-Is there html parsing functionality in apache already?)
+Is there html parsing functionality in apache already?) -- 
+- Also mod_substitue?  
 - 
 */
 
@@ -94,7 +95,7 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
         apr_bucket *pbktOut;
 
         //Is this the last bucket, 
-        if(APR_BUCKET_IS_EOS(pbktIn))
+        if(APR_BUCKET_IS_EOS(hbktIn))
             {
             apr_bucket *pbktEOS=apr_bucket_eos_create(c->bucket_alloc);
             APR_BRIGADE_INSERT_TAIL(pbbOut,pbktEOS);
@@ -102,7 +103,7 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
             }
 
         /* read */
-        apr_bucket_read(pbktIn,&data,&len,APR_BLOCK_READ);
+        apr_bucket_read(hbktIn,&data,&len,APR_BLOCK_READ);
 
         /* write:
         This is where we need to add our logic.
@@ -133,7 +134,7 @@ and put it in our HelloFilterConfig struct so we have access to it in our output
 */
 static const char *HelloFilterSetKey(cmd_parms *cmd, void *dummy, char *arg)
     {
-    HelloFilterConfig *pConfig=ap_get_module_config(cmd->server->module_config,
+    HelloConfig *pConfig=ap_get_module_config(cmd->server->module_config,
                                                    &hello_filter_module);
     pConfig->nonce=arg;
 
