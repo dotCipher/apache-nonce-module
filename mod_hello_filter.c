@@ -33,7 +33,7 @@ module AP_MODULE_DECLARE_DATA hello_filter_module;
 //e.g. nonceKey
 typedef struct{
 int isEnabled;
-const char *nonce
+const char *nonce;
 } HelloConfig;
 
 /*
