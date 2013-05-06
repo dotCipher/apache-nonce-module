@@ -14,9 +14,9 @@ Requirements
 ======
 
 - GNU GMP Library
-- - `apt-get install libgcrypt11-dev`
+- `apt-get install libgcrypt11-dev`
 - LIBGCRYPT Library
-- - `apt-get install zlib1g-dev`
+- `apt-get install zlib1g-dev`
 
 Compilation
 ======
