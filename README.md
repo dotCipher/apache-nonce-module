@@ -21,7 +21,6 @@ Requirements
 Compilation
 ======
 
-- Command for compilation:
-- - apxs2 -cia -lgmp \`libgcrypt-config --cflags --libs\` mod_hello_filter.c
-- - (Note for this to work you need to have GMP and LibGCrypt installed)
+- apxs2 -cia -lgmp \`libgcrypt-config --cflags --libs\` mod_hello_filter.c
+- (Note for this to work you need to have GMP and LibGCrypt installed)
 
