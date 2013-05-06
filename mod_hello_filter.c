@@ -33,7 +33,7 @@ module AP_MODULE_DECLARE_DATA hello_filter_module;
 //e.g. nonceKey
 typedef struct{
 int isEnabled;
-const char *nonce
+const char *key
 } HelloConfig;
 
 /*
@@ -145,7 +145,7 @@ static const char *HelloFilterSetKey(cmd_parms *cmd, void *dummy, char *arg)
     {
     HelloConfig *pConfig=ap_get_module_config(cmd->server->module_config,
                                                    &hello_filter_module);
-    pConfig->nonce=arg;
+    pConfig->key=arg;
 
     return NULL;
     }
