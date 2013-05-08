@@ -30,10 +30,11 @@ static const char s_szHelloFilterName[]="HelloFilter";
 module AP_MODULE_DECLARE_DATA hello_filter_module;
 
 //This is where we store directive-populated values
-//e.g. nonceKey
+//e.g. nonce, key
 typedef struct{
 int isEnabled;
-const char *key
+const char *key;
+const char *nonce;
 } HelloConfig;
 
 /*
@@ -85,11 +86,11 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 	//Let's allocate some space for our output bucket brigade
 	pbbOut=apr_brigade_create(r->pool, c->bucket_alloc);
 	
-	// Assign variable to use for nonce_gen
-	char *nonce;
-	nonce = nonce_rand_gen();
-	printf(nonce);
-	free(nonce);
+	// MOVED TO STRUCT: Assign variable to use for nonce_gen
+/*	char *nonce;*/
+/*	nonce = nonce_rand_gen();*/
+/*	printf(nonce);*/
+/*	free(nonce);*/
 	
 	//Assign the current bucket to hbktIn (this will always be the case unless there are
 	//no more buckets bc we remove them from the incoming bucket brigade each iteration)
@@ -125,7 +126,7 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
         //Right now this filters output and converts all characters to upper case.
         buf = apr_bucket_alloc(len, c->bucket_alloc);
         for(n=0 ; n < len ; ++n)
-            buf[n] = apr_toupper(data[n]);
+            buf[n] = apr_tolower(data[n]);
 
         pbktOut = apr_bucket_heap_create(buf, len, apr_bucket_free,
                                          c->bucket_alloc);
@@ -143,10 +144,10 @@ and put it in our HelloFilterConfig struct so we have access to it in our output
 */
 static const char *HelloFilterSetKey(cmd_parms *cmd, void *dummy, char *arg)
     {
-    HelloConfig *pConfig=ap_get_module_config(cmd->server->module_config,
-                                                   &hello_filter_module);
+    HelloConfig *pConfig=ap_get_module_config(cmd->server->module_config,&hello_filter_module);
     pConfig->key=arg;
-
+    // Also generate unique nonce in struct
+    pConfig->nonce=nonce_rand_gen();
     return NULL;
     }
 
