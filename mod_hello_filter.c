@@ -20,6 +20,7 @@ Is there html parsing functionality in apache already?) --
 #include <apr_general.h>
 #include <apr_lib.h>
 #include <apr_strings.h>
+#include <apr_strmatch.h>
 #include <util_filter.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -94,7 +95,16 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 /*	nonce = nonce_rand_gen();*/
 /*	printf(nonce);*/
 /*	free(nonce);*/
-	
+    HelloConfig *hConfig = ap_get_module_config(r->server->module_config,&hello_filter_module);
+	const char *key = hConfig->key;
+    char *index;
+    for (index=key; *index; ++index)
+        ;
+    int key_length = index-key;
+    for (index=nonce; *index; ++index)
+        ;
+    int nonce_length = index-nonce;
+
 	//Assign the current bucket to hbktIn (this will always be the case unless there are
 	//no more buckets bc we remove them from the incoming bucket brigade each iteration)
 	   for (hbktIn = APR_BRIGADE_FIRST(pbbIn);
@@ -130,7 +140,21 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
         buf = apr_bucket_alloc(len, c->bucket_alloc);
         for(n=0 ; n < len ; ++n)
         {
-            if()
+            if(apr_strnatcmp(key[0], buf[n]) == 0)
+            {
+                int isKey = 0;
+                int i = 0;
+                for(i; isKey !=0 && i < length; i++)
+                {
+                    if(apr_strnatcmp(key[i], buf[n + i]) != 0)
+                        isKey=1;
+                }
+
+                if(isKey == 0)
+                {
+
+                }
+            }
         }
             buf[n] = apr_tolower(data[n]);
 
