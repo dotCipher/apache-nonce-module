@@ -156,8 +156,7 @@ Apache boilerplate -- reads in the value of "NonceKey" directive
 */
 static const command_rec HelloFilterCmds[] =
     {
-    AP_INIT_TAKE1("NonceKey", HelloFilterSetKey, NULL, RSRC_CONF,
-                 "Directive to set script attribute nonce key"),
+    AP_INIT_TAKE1("NonceKey", HelloFilterSetKey, NULL, RSRC_CONF,"Directive to set script attribute nonce key"),
     { NULL }
     };
 /*
