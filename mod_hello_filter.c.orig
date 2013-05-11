@@ -1,4 +1,4 @@
-    /*A hello world module to test
+/*A hello world module to test
 *adding/modifying content using 
 *existing mod_filter 
 
@@ -39,69 +39,10 @@ const char *key;
 const char *nonce;
 } HelloConfig;
 
-apr_size_t new_bucket_size=0;
-
 /*
 Not *totally* necessary, but this is useful for configuring parameters before our conf
 file is read
 */
-
-static char *replace_nonce(const char *oldString, const char *key)
-{
-    const char *oldString = "Hi -- this is a string with script nonce noncey.  This is the string after nonce.";
-    const char *nonce = "oisgunuehr98902ogshpq3";
-    const char *key = "noncey";
-    char *index;
-    char newBuff[4096];
-    apr_size_t size_key = 6;
-    apr_size_t size_nonce = 22;
-    apr_size_t size_newstring = 0;
-    apr_size_t n = 0;
-    for(index=oldString; *index; ++index)
-    {
-        const char a = *index;
-        const char b = *key;
-        if(apr_strnatcmp(&a, &b)==0)
-        {
-            apr_size_t j = 0;
-            apr_size_t isNonceKey = 0;
-            const char temp_index = index;
-            const char temp_key = key;
-            for (j; j < size_key && isNonceKey == 0; j++)
-            {
-                const char temp_char = index + j;
-                const char temp_key_char = key + j;   
-                if(apr_strnatcmp(&temp_char, &temp_key_char)!= 0)
-                {
-                    isNonceKey = 1;
-                    break;
-                };
-            }
-            if(isNonceKey==0)
-            {
-                index=index + (size_key);
-                apr_size_t k;
-                for(k = 0; k < size_nonce; k++)
-                {
-                    newBuff[n+k] = nonce[k];
-                    size_newstring++;
-                }
-                n = n + size_nonce;
-            }
-        }
-        newBuff[n] = *index;
-        size_newstring++;
-        n++;
-    }
-    newBuff[n + 1] = '\0';
-    size_newstring++;
-    char return_buff[size_newstring];
-    for(n = 0; n < size_newstring; n++)
-        return_buff[n] = newBuff[n];
-    new_bucket_size = size_newstring;
-    return return_buff;
-}
-
 static void *HelloFilterConfig(apr_pool_t *p, server_rec *s)
 {
 	HelloConfig *hConfig=apr_pcalloc(p, sizeof *hConfig);
@@ -151,6 +92,7 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 	//Let's allocate some space for our output bucket brigade
 	pbbOut=apr_brigade_create(r->pool, c->bucket_alloc);
 	
+<<<<<<< HEAD
 	// MOVED TO STRUCT: Assign variable to use for nonce_gen
 /*	char *nonce;*/
 /*	nonce = nonce_rand_gen();*/
@@ -166,6 +108,8 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
         ;
     int nonce_length = index-nonce;
 
+=======
+>>>>>>> 815952211e830600d900767d01c242ca6a22886f
 	//Assign the current bucket to hbktIn (this will always be the case unless there are
 	//no more buckets bc we remove them from the incoming bucket brigade each iteration)
 	   for (hbktIn = APR_BRIGADE_FIRST(pbbIn);
@@ -188,12 +132,67 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 
         /* read */
         apr_bucket_read(hbktIn,&data,&len,APR_BLOCK_READ);
+        
+        /* write:
+        This is where we need to add our logic.
+        1. Find script nonce key in file
+        2. Replace with base 64 encoded hash digest of our nonce
+        3. Keep track of how much we increase the size of the file. 
+        We shouldn't hardcode the length of the key, but we may have to
+        */
 
         //Right now this filters output and converts all characters to upper case.
-        buf = apr_bucket_alloc(len + nonce_length, c->bucket_alloc);
-        buf = replace_nonce(data, nonce);
+        buf = apr_bucket_alloc(len, c->bucket_alloc);
+        for(n=0 ; n < len ; ++n)
+<<<<<<< HEAD
+        {
+            if(apr_strnatcmp(key[0], buf[n]) == 0)
+            {
+                int isKey = 0;
+                int i = 0;
+                for(i; isKey !=0 && i < length; i++)
+                {
+                    if(apr_strnatcmp(key[i], buf[n + i]) != 0)
+                        isKey=1;
+                }
 
-        pbktOut = apr_bucket_heap_create(buf, new_bucket_size, apr_bucket_free, c->bucket_alloc);
+                if(isKey == 0)
+                {
+
+                }
+            }
+        }
+            buf[n] = apr_tolower(data[n]);
+
+        pbktOut = apr_bucket_heap_create(buf, len, apr_bucket_free,
+                                         c->bucket_alloc);
+=======
+        	buf[n] = apr_tolower(data[n]);
+        
+        // DEBUGGING FOR DIFFERENCE OF SIZE
+/*        buf[0] = diff-((char)'a');*/
+/*        for(n=1;n<len; ++n){*/
+/*        	buf[n] = '\0';*/
+/*        }*/
+        
+        // DEBUGGING FOR KEY
+/*        for(n=0; n<strlen(hConfig->key); ++n){*/
+/*        	buf[n] = (char)hConfig->key[n];*/
+/*        }*/
+/*        for(;n<len; ++n){*/
+/*        	buf[n] = '\0';*/
+/*        }*/
+        
+        // DEBUGGING FOR NONCE
+/*        for(n=0; n < strlen(hConfig->nonce); ++n){*/
+/*        	buf[n] = (char)hConfig->nonce[n];*/
+/*        }*/
+/*        for(;n<len; ++n){*/
+/*        	buf[n] = '\0';*/
+/*        }*/
+
+        pbktOut = apr_bucket_heap_create(buf, len, apr_bucket_free, c->bucket_alloc);
+>>>>>>> 815952211e830600d900767d01c242ca6a22886f
         APR_BRIGADE_INSERT_TAIL(pbbOut,pbktOut);
         }
        	//So I don't think we can do this directly 
