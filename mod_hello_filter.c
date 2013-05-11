@@ -72,15 +72,11 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 		brigade to be our header, and then iterate through the buckets in the brigade
 		to find "<script>" tags.
 	*/
-<<<<<<< HEAD
-	// Difference of sizes
-	int diff;
-=======
-    //First, generate nonce
-    // Also generate unique nonce in struct
-    const char *nonce=nonce_rand_gen();
-
->>>>>>> 3fc1b17688f1357e00b60a28e8f0563c0b3ff33b
+	
+  //First, generate nonce
+  // Also generate unique nonce in struct
+  const char *nonce=nonce_rand_gen();
+    
 	//Grab the request object from the filter context	
 	request_rec *r = f->r;
 	//From the request object, grab connection details
@@ -91,15 +87,6 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 	//The object we will eventually return and pass back to mod_filter
 	apr_bucket_brigade *pbbOut;
 	HelloConfig *hConfig=ap_get_module_config(r->server->module_config, &hello_filter_module);
-	
-	// Figure out the difference of data sizes b/n key and nonce
-	if((sizeof(hConfig->key)/sizeof(char)) < (sizeof(hConfig->nonce)/sizeof(char))){
-		diff = (int)((sizeof(hConfig->nonce)/sizeof(char)) - (sizeof(hConfig->key)/sizeof(char)));
-	} else if ((sizeof(hConfig->key)/sizeof(char)) > hConfig->nonce) {
-		diff = (int)((sizeof(hConfig->nonce)/sizeof(char)) - (sizeof(hConfig->key)/sizeof(char)))*(-1);
-	} else {
-		diff = 0;
-	}
 	
 	//Let's allocate some space for our output bucket brigade
 	pbbOut=apr_brigade_create(r->pool, c->bucket_alloc);
@@ -138,7 +125,6 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
         //Right now this filters output and converts all characters to upper case.
         buf = apr_bucket_alloc(len, c->bucket_alloc);
         for(n=0 ; n < len ; ++n)
-<<<<<<< HEAD
         	buf[n] = apr_tolower(data[n]);
         
         // DEBUGGING FOR DIFFERENCE OF SIZE
@@ -169,19 +155,6 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
        	//So I don't think we can do this directly 
         //Possibly need to create a bucket and insert at the head?  Not sure
        //apr_table_set(r->headers_out, "Script-Nonce", nonce);
-
-    
-=======
-        {
-            if()
-        }
-            buf[n] = apr_tolower(data[n]);
-
-        pbktOut = apr_bucket_heap_create(buf, len, apr_bucket_free,
-                                         c->bucket_alloc);
-        APR_BRIGADE_INSERT_TAIL(pbbOut,pbktOut);
-        }
->>>>>>> 3fc1b17688f1357e00b60a28e8f0563c0b3ff33b
     apr_brigade_cleanup(pbbIn);
     return ap_pass_brigade(f->next,pbbOut);
     }
@@ -212,7 +185,6 @@ static void HelloRegisterHooks(apr_pool_t *p)
     ap_hook_insert_filter(HelloFilterInsertFilter,NULL,NULL,APR_HOOK_MIDDLE);
     ap_register_output_filter(s_szHelloFilterName,HelloFilterOutFilter,NULL,AP_FTYPE_RESOURCE);
     }
-
 
 module AP_MODULE_DECLARE_DATA hello_filter_module =
 {
