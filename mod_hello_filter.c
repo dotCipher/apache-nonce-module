@@ -23,7 +23,7 @@ Is there html parsing functionality in apache already?) --
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "nonce_gen/nonce_rand.c"
+#include "nonce_gen/nonce_rand.h"
 
 //This is how we tell the server the name of our filter
 static const char s_szHelloFilterName[]="HelloFilter";
