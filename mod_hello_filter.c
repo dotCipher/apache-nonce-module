@@ -72,7 +72,8 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 		brigade to be our header, and then iterate through the buckets in the brigade
 		to find "<script>" tags.
 	*/
-
+	// Difference of sizes
+	int diff;
 	//Grab the request object from the filter context	
 	request_rec *r = f->r;
 	//From the request object, grab connection details
@@ -82,15 +83,19 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 	apr_bucket *hbktIn;
 	//The object we will eventually return and pass back to mod_filter
 	apr_bucket_brigade *pbbOut;
-
+	HelloConfig *hConfig=ap_get_module_config(r->server->module_config, &hello_filter_module);
+	
+	// Figure out the difference of data sizes b/n key and nonce
+	if((sizeof(hConfig->key)/sizeof(char)) < (sizeof(hConfig->nonce)/sizeof(char))){
+		diff = (int)((sizeof(hConfig->nonce)/sizeof(char)) - (sizeof(hConfig->key)/sizeof(char)));
+	} else if ((sizeof(hConfig->key)/sizeof(char)) > hConfig->nonce) {
+		diff = (int)((sizeof(hConfig->nonce)/sizeof(char)) - (sizeof(hConfig->key)/sizeof(char)))*(-1);
+	} else {
+		diff = 0;
+	}
+	
 	//Let's allocate some space for our output bucket brigade
 	pbbOut=apr_brigade_create(r->pool, c->bucket_alloc);
-	
-	// MOVED TO STRUCT: Assign variable to use for nonce_gen
-/*	char *nonce;*/
-/*	nonce = nonce_rand_gen();*/
-/*	printf(nonce);*/
-/*	free(nonce);*/
 	
 	//Assign the current bucket to hbktIn (this will always be the case unless there are
 	//no more buckets bc we remove them from the incoming bucket brigade each iteration)
@@ -114,7 +119,7 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 
         /* read */
         apr_bucket_read(hbktIn,&data,&len,APR_BLOCK_READ);
-
+        
         /* write:
         This is where we need to add our logic.
         1. Find script nonce key in file
@@ -126,15 +131,38 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
         //Right now this filters output and converts all characters to upper case.
         buf = apr_bucket_alloc(len, c->bucket_alloc);
         for(n=0 ; n < len ; ++n)
-            buf[n] = apr_tolower(data[n]);
+        	buf[n] = apr_tolower(data[n]);
+        
+        // DEBUGGING FOR DIFFERENCE OF SIZE
+/*        buf[0] = diff-((char)'a');*/
+/*        for(n=1;n<len; ++n){*/
+/*        	buf[n] = '\0';*/
+/*        }*/
+        
+        // DEBUGGING FOR KEY
+/*        for(n=0; n<strlen(hConfig->key); ++n){*/
+/*        	buf[n] = (char)hConfig->key[n];*/
+/*        }*/
+/*        for(;n<len; ++n){*/
+/*        	buf[n] = '\0';*/
+/*        }*/
+        
+        // DEBUGGING FOR NONCE
+/*        for(n=0; n < strlen(hConfig->nonce); ++n){*/
+/*        	buf[n] = (char)hConfig->nonce[n];*/
+/*        }*/
+/*        for(;n<len; ++n){*/
+/*        	buf[n] = '\0';*/
+/*        }*/
 
-        pbktOut = apr_bucket_heap_create(buf, len, apr_bucket_free,
-                                         c->bucket_alloc);
+        pbktOut = apr_bucket_heap_create(buf, len, apr_bucket_free, c->bucket_alloc);
         APR_BRIGADE_INSERT_TAIL(pbbOut,pbktOut);
         }
        	//So I don't think we can do this directly 
         //Possibly need to create a bucket and insert at the head?  Not sure
        //apr_table_set(r->headers_out, "Script-Nonce", nonce);
+
+    
     apr_brigade_cleanup(pbbIn);
     return ap_pass_brigade(f->next,pbbOut);
     }
@@ -156,7 +184,7 @@ Apache boilerplate -- reads in the value of "NonceKey" directive
 */
 static const command_rec HelloFilterCmds[] =
     {
-    AP_INIT_TAKE1("NonceKey", HelloFilterSetKey, NULL, RSRC_CONF,"Directive to set script attribute nonce key"),
+    AP_INIT_TAKE1("NonceKey", HelloFilterSetKey, NULL, OR_FILEINFO,"Directive to set script attribute nonce key"),
     { NULL }
     };
 /*
@@ -165,8 +193,7 @@ Registers our input & output functions wth mod_filter, which actually calls our 
 static void HelloRegisterHooks(apr_pool_t *p)
     {
     ap_hook_insert_filter(HelloFilterInsertFilter,NULL,NULL,APR_HOOK_MIDDLE);
-    ap_register_output_filter(s_szHelloFilterName,HelloFilterOutFilter,NULL,
-                              AP_FTYPE_RESOURCE);
+    ap_register_output_filter(s_szHelloFilterName,HelloFilterOutFilter,NULL,AP_FTYPE_RESOURCE);
     }
 
 
