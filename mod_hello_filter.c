@@ -19,11 +19,12 @@ Is there html parsing functionality in apache already?) --
 #include <apr_buckets.h>
 #include <apr_general.h>
 #include <apr_lib.h>
+#include <apr_strings.h>
 #include <util_filter.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "nonce_gen/nonce_rand.c"
+#include "nonce_gen/nonce_rand.h"
 
 //This is how we tell the server the name of our filter
 static const char s_szHelloFilterName[]="HelloFilter";
@@ -54,7 +55,6 @@ static void *HelloFilterConfig(apr_pool_t *p, server_rec *s)
 static void HelloFilterInsertFilter(request_rec *r)
 {
 	HelloConfig *hConfig=ap_get_module_config(r->server->module_config, &hello_filter_module);
-
 	if(!hConfig->isEnabled)
 		return;
 
@@ -72,6 +72,9 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 		brigade to be our header, and then iterate through the buckets in the brigade
 		to find "<script>" tags.
 	*/
+    //First, generate nonce
+    // Also generate unique nonce in struct
+    const char *nonce=nonce_rand_gen();
 
 	//Grab the request object from the filter context	
 	request_rec *r = f->r;
@@ -126,15 +129,15 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
         //Right now this filters output and converts all characters to upper case.
         buf = apr_bucket_alloc(len, c->bucket_alloc);
         for(n=0 ; n < len ; ++n)
+        {
+            if()
+        }
             buf[n] = apr_tolower(data[n]);
 
         pbktOut = apr_bucket_heap_create(buf, len, apr_bucket_free,
                                          c->bucket_alloc);
         APR_BRIGADE_INSERT_TAIL(pbbOut,pbktOut);
         }
-       	//So I don't think we can do this directly 
-        //Possibly need to create a bucket and insert at the head?  Not sure
-       //apr_table_set(r->headers_out, "Script-Nonce", nonce);
     apr_brigade_cleanup(pbbIn);
     return ap_pass_brigade(f->next,pbbOut);
     }
@@ -142,12 +145,10 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 Function to grab the script nonce key from the .conf file for mod_hello_filter
 and put it in our HelloFilterConfig struct so we have access to it in our output function
 */
-static const char *HelloFilterSetKey(cmd_parms *cmd, void *dummy, char *arg)
+static const char *HelloFilterSetKey(cmd_parms *cmd, void *cfg, char *arg)
     {
-    HelloConfig *pConfig=ap_get_module_config(cmd->server->module_config,&hello_filter_module);
-    pConfig->key=arg;
-    // Also generate unique nonce in struct
-    pConfig->nonce=nonce_rand_gen();
+    HelloConfig *hConfig=ap_get_module_config(cmd->server->module_config,&hello_filter_module);
+    hConfig->key=arg;
     return NULL;
     }
 
@@ -156,8 +157,7 @@ Apache boilerplate -- reads in the value of "NonceKey" directive
 */
 static const command_rec HelloFilterCmds[] =
     {
-    AP_INIT_TAKE1("NonceKey", HelloFilterSetKey, NULL, RSRC_CONF,
-                 "Directive to set script attribute nonce key"),
+    AP_INIT_TAKE1("NonceKey", HelloFilterSetKey, NULL, RSRC_CONF,"Directive to set script attribute nonce key"),
     { NULL }
     };
 /*
