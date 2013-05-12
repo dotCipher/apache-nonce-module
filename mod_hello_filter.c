@@ -46,17 +46,14 @@ Not *totally* necessary, but this is useful for configuring parameters before ou
 file is read
 */
 
-static char *replace_nonce(const char *oldString, const char *key)
+static char *replace_nonce(const char *oldString, const char *key, const char *nonce, int key_length)
 {
-    const char *oldString = "Hi -- this is a string with script nonce noncey.  This is the string after nonce.";
-    const char *nonce = "oisgunuehr98902ogshpq3";
-    const char *key = "noncey";
     char *index;
     char newBuff[4096];
-    apr_size_t size_key = 6;
-    apr_size_t size_nonce = 22;
-    apr_size_t size_newstring = 0;
     apr_size_t n = 0;
+    apr_size_t size_newstring = 0;
+
+
     for(index=oldString; *index; ++index)
     {
         const char a = *index;
@@ -67,7 +64,7 @@ static char *replace_nonce(const char *oldString, const char *key)
             apr_size_t isNonceKey = 0;
             const char temp_index = index;
             const char temp_key = key;
-            for (j; j < size_key && isNonceKey == 0; j++)
+            for (j; j < key_length && isNonceKey == 0; j++)
             {
                 const char temp_char = index + j;
                 const char temp_key_char = key + j;   
@@ -79,7 +76,7 @@ static char *replace_nonce(const char *oldString, const char *key)
             }
             if(isNonceKey==0)
             {
-                index=index + (size_key);
+                index=index + (key_length);
                 apr_size_t k;
                 for(k = 0; k < size_nonce; k++)
                 {
@@ -193,6 +190,7 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
         buf = apr_bucket_alloc(len + nonce_length, c->bucket_alloc);
         buf = replace_nonce(data, nonce);
 
+        
         pbktOut = apr_bucket_heap_create(buf, new_bucket_size, apr_bucket_free, c->bucket_alloc);
         APR_BRIGADE_INSERT_TAIL(pbbOut,pbktOut);
         }
