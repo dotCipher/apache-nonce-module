@@ -35,7 +35,7 @@ module AP_MODULE_DECLARE_DATA hello_filter_module;
 //e.g. nonce, key
 typedef struct{
 int isEnabled;
-const char *key = "init";
+const char *key;
 const char *nonce;
 } HelloConfig;
 
@@ -45,49 +45,6 @@ char newBuff[4096];
 Not *totally* necessary, but this is useful for configuring parameters before our conf
 file is read
 */
-
-void replace_nonce(const char *buf, const char *key, const char *nonce)
-{
-    char *index;
-    int size_key = strnlen(key, 1024);
-    int size_nonce = strnlen(nonce, 1024);
-    int n = 0;
-    for(index=buf; *index; ++index)
-    {
-        const char a=*index;
-        const char b=*key;
-        if(strncmp(a, b, 1)==0)
-        {
-            int j = 0;
-            int isNonceKey = 0;
-            const char temp_index = index;
-            const char temp_key = key;
-            for (j; j < size_key && isNonceKey == 0; j++)
-            {
-                if(strncmp(temp_index + j, temp_key + j, 1) != 0)
-                {
-                    isNonceKey = 1;
-                    break;
-                };
-            }
-            if(isNonceKey==0)
-            {
-                char *nonce_index;
-                int k;
-                *index = temp_index + size_key;
-                for(nonce_index=nonce; *nonce_index; ++nonce_index)
-                {
-                    newBuff[n] = *nonce;
-                    n++;
-                }
-            }
-
-        }
-        newBuff[n] = *index;
-        n++;
-    }
-    newBuff[n + 1] = '\0';
-}
 static void *HelloFilterConfig(apr_pool_t *p, server_rec *s)
 {
 	HelloConfig *hConfig=apr_pcalloc(p, sizeof *hConfig);
