@@ -35,7 +35,7 @@ module AP_MODULE_DECLARE_DATA hello_filter_module;
 //e.g. nonce, key
 typedef struct{
 int isEnabled;
-const char *key;
+const char *key = "init";
 const char *nonce;
 } HelloConfig;
 
@@ -46,22 +46,22 @@ Not *totally* necessary, but this is useful for configuring parameters before ou
 file is read
 */
 
-void replace_nonce(const char **buf, const char **key, const char **nonce)
+void replace_nonce(const char *buf, const char *key, const char *nonce)
 {
-    char **index;
-    int size_key = strnlen(*key, 1024);
-    int size_nonce = strnlen(*nonce, 1024);
+    char *index;
+    int size_key = strnlen(key, 1024);
+    int size_nonce = strnlen(nonce, 1024);
     int n = 0;
-    for(index=buf; **index; ++*index)
+    for(index=buf; *index; ++index)
     {
-        const char a=**index;
-        const char b=**key;
-        if(strncmp(&a, &b, 1)==0)
+        const char a=*index;
+        const char b=*key;
+        if(strncmp(a, b, 1)==0)
         {
             int j = 0;
             int isNonceKey = 0;
-            const char *temp_index = *index;
-            const char *temp_key = *key;
+            const char temp_index = index;
+            const char temp_key = key;
             for (j; j < size_key && isNonceKey == 0; j++)
             {
                 if(strncmp(temp_index + j, temp_key + j, 1) != 0)
@@ -72,18 +72,18 @@ void replace_nonce(const char **buf, const char **key, const char **nonce)
             }
             if(isNonceKey==0)
             {
-                char **nonce_index;
+                char *nonce_index;
                 int k;
                 *index = temp_index + size_key;
-                for(nonce_index=nonce; **nonce_index; ++*nonce_index)
+                for(nonce_index=nonce; *nonce_index; ++nonce_index)
                 {
-                    newBuff[n] = **nonce;
+                    newBuff[n] = *nonce;
                     n++;
                 }
             }
 
         }
-        newBuff[n] = **index;
+        newBuff[n] = *index;
         n++;
     }
     newBuff[n + 1] = '\0';
@@ -186,12 +186,22 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
         apr_bucket_read(hbktIn,&data,&len,APR_BLOCK_READ);
 
         //Right now this filters output and converts all characters to upper case.
-        replace_nonce(&data, &k, &nonce);
-        new_bucket_size = (apr_size_t)(len + strlen(newBuff));
+        new_bucket_size = len + (apr_size_t)(strlen(nonce));
         buf = apr_bucket_alloc(new_bucket_size, c->bucket_alloc);
 
-        for(n = 0; n < strlen(newBuff); n++)
-            buf[n] = newBuff[n];
+        for(n = 0; n < new_bucket_size; n++)
+        {
+            if(strncmp(data[n], key, size_key) == 0)
+            {
+                apr_size_t i = 0;
+                for(i; i < size_nonce; i++)
+                {
+                    buf[i] = nonce[i];
+                }
+                n++;
+            }
+            buf[n] = data[n];
+        }
 
         pbktOut = apr_bucket_heap_create(buf, new_bucket_size, apr_bucket_free, c->bucket_alloc);
         APR_BRIGADE_INSERT_TAIL(pbbOut,pbktOut);
