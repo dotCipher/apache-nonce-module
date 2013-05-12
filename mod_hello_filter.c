@@ -46,29 +46,26 @@ Not *totally* necessary, but this is useful for configuring parameters before ou
 file is read
 */
 
-static char *replace_nonce(const char *oldString, const char *key, const char *nonce, int key_length)
+static char *replace_nonce(const char *buf, const char *key, const char *nonce)
 {
     char *index;
     char newBuff[4096];
-    apr_size_t n = 0;
-    apr_size_t size_newstring = 0;
-
-
-    for(index=oldString; *index; ++index)
+    int size_key = strnlen(key, 1024);
+    int size_nonce = strnlen(nonce, 1024);
+    int n = 0;
+    for(index=buf; *index; ++index)
     {
         const char a = *index;
         const char b = *key;
-        if(apr_strnatcmp(&a, &b)==0)
+        if(strncmp(a, b, 1)==0)
         {
-            apr_size_t j = 0;
-            apr_size_t isNonceKey = 0;
-            const char temp_index = index;
-            const char temp_key = key;
-            for (j; j < key_length && isNonceKey == 0; j++)
+            int j = 0;
+            int isNonceKey = 0;
+            const char *temp_index = index;
+            const char *temp_key = key;
+            for (j; j < size_key && isNonceKey == 0; j++)
             {
-                const char temp_char = index + j;
-                const char temp_key_char = key + j;   
-                if(apr_strnatcmp(&temp_char, &temp_key_char)!= 0)
+                if(strncmp(temp_index + j, temp_key + j, 1) != 0)
                 {
                     isNonceKey = 1;
                     break;
@@ -76,29 +73,21 @@ static char *replace_nonce(const char *oldString, const char *key, const char *n
             }
             if(isNonceKey==0)
             {
-                char *temp = nonce;
-                index=index + (key_length);
-                apr_size_t k = 1;
-                for(temp=nonce; *temp; ++temp)
+                index=index + (size_key);
+                int k;
+                for(k = 0; k < size_nonce; k++)
                 {
                     newBuff[n+k] = nonce[k];
-                    size_newstring++;
-                    k++;
                 }
-                n = n + (k + 1);
+                n = n + size_nonce;
             }
+
         }
         newBuff[n] = *index;
-        size_newstring++;
         n++;
     }
     newBuff[n + 1] = '\0';
-    size_newstring++;
-    char return_buff[size_newstring];
-    for(n = 0; n < size_newstring; n++)
-        return_buff[n] = newBuff[n];
-    new_bucket_size = size_newstring;
-    return return_buff;
+    return newBuff;
 }
 
 static void *HelloFilterConfig(apr_pool_t *p, server_rec *s)
@@ -189,7 +178,7 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 
         //Right now this filters output and converts all characters to upper case.
         buf = apr_bucket_alloc(len + nonce_length, c->bucket_alloc);
-        buf = replace_nonce(data, k, nonce, key_length);
+        buf = replace_nonce(data, k, nonce);
 
         pbktOut = apr_bucket_heap_create(buf, new_bucket_size, apr_bucket_free, c->bucket_alloc);
         APR_BRIGADE_INSERT_TAIL(pbbOut,pbktOut);
