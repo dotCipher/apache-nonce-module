@@ -189,7 +189,7 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 
         //Right now this filters output and converts all characters to upper case.
         buf = apr_bucket_alloc(len + nonce_length, c->bucket_alloc);
-        buf = replace_nonce(data, nonce);
+        buf = replace_nonce(data, k, nonce, key_length);
 
         pbktOut = apr_bucket_heap_create(buf, new_bucket_size, apr_bucket_free, c->bucket_alloc);
         APR_BRIGADE_INSERT_TAIL(pbbOut,pbktOut);
