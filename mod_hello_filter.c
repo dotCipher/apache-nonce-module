@@ -130,7 +130,7 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
         apr_bucket_read(hbktIn,&data,&len,APR_BLOCK_READ);
 
         //Right now this filters output and converts all characters to upper case.
-        new_bucket_size = len + (apr_size_t)(strlen(nonce));
+        apr_size_t new_bucket_size = len + (apr_size_t)(strlen(nonce));
         buf = apr_bucket_alloc(new_bucket_size, c->bucket_alloc);
 
         for(n = 0; n < new_bucket_size; n++)
@@ -139,7 +139,7 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
             {
                 int isKey = 0;
                 int j = 0;
-                for (j; j < strlen(k), j++)
+                for (j; j < strlen(k); j++)
                 {
                     if(strncmp(data[n + j], k[j], 1) != 0)
                         isKey = 1;
