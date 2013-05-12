@@ -155,9 +155,9 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 /*	nonce = nonce_rand_gen();*/
 /*	printf(nonce);*/
 /*	free(nonce);*/
-	const char *key = hConfig->key;
+	const char *k = hConfig->key;
     char *index;
-    for (index=key; *index; ++index)
+    for (index=k; *index; ++index)
         ;
     int key_length = index-key;
     for (index=nonce; *index; ++index)
@@ -191,7 +191,6 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
         buf = apr_bucket_alloc(len + nonce_length, c->bucket_alloc);
         buf = replace_nonce(data, nonce);
 
-        git p
         pbktOut = apr_bucket_heap_create(buf, new_bucket_size, apr_bucket_free, c->bucket_alloc);
         APR_BRIGADE_INSERT_TAIL(pbbOut,pbktOut);
         }
