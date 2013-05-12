@@ -148,10 +148,10 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 
         for(n = 0; n < new_bucket_size; n++)
         {
-            if(strncmp(data[n], key, size_key) == 0)
+            if(strncmp(data[n], key, key_length) == 0)
             {
                 apr_size_t i = 0;
-                for(i; i < size_nonce; i++)
+                for(i; i < nonce_length; i++)
                 {
                     buf[i] = nonce[i];
                 }
