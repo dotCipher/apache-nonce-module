@@ -40,29 +40,28 @@ const char *nonce;
 } HelloConfig;
 
 apr_size_t new_bucket_size=0;
-
+char newBuff[4096];
 /*
 Not *totally* necessary, but this is useful for configuring parameters before our conf
 file is read
 */
 
-static char *replace_nonce(const char *buf, const char *key, const char *nonce)
+void replace_nonce(const char **buf, const char **key, const char **nonce)
 {
-    char *index;
-    char newBuff[4096];
-    int size_key = strnlen(key, 1024);
-    int size_nonce = strnlen(nonce, 1024);
+    char **index;
+    int size_key = strnlen(*key, 1024);
+    int size_nonce = strnlen(*nonce, 1024);
     int n = 0;
-    for(index=buf; *index; ++index)
+    for(index=buf; **index; ++*index)
     {
-        const char a = *index;
-        const char b = *key;
-        if(strncmp(a, b, 1)==0)
+        const char a=**index;
+        const char b=**key;
+        if(strncmp(&a, &b, 1)==0)
         {
             int j = 0;
             int isNonceKey = 0;
-            const char *temp_index = index;
-            const char *temp_key = key;
+            const char *temp_index = *index;
+            const char *temp_key = *key;
             for (j; j < size_key && isNonceKey == 0; j++)
             {
                 if(strncmp(temp_index + j, temp_key + j, 1) != 0)
@@ -73,23 +72,22 @@ static char *replace_nonce(const char *buf, const char *key, const char *nonce)
             }
             if(isNonceKey==0)
             {
-                index=index + (size_key);
+                char **nonce_index;
                 int k;
-                for(k = 0; k < size_nonce; k++)
+                *index = temp_index + size_key;
+                for(nonce_index=nonce; **nonce_index; ++*nonce_index)
                 {
-                    newBuff[n+k] = nonce[k];
+                    newBuff[n] = **nonce;
+                    n++;
                 }
-                n = n + size_nonce;
             }
 
         }
-        newBuff[n] = *index;
+        newBuff[n] = **index;
         n++;
     }
     newBuff[n + 1] = '\0';
-    return newBuff;
 }
-
 static void *HelloFilterConfig(apr_pool_t *p, server_rec *s)
 {
 	HelloConfig *hConfig=apr_pcalloc(p, sizeof *hConfig);
@@ -189,9 +187,8 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 
         //Right now this filters output and converts all characters to upper case.
         buf = apr_bucket_alloc(len + nonce_length, c->bucket_alloc);
-        buf = replace_nonce(data, k, nonce);
-
-        pbktOut = apr_bucket_heap_create(buf, new_bucket_size, apr_bucket_free, c->bucket_alloc);
+        replace_nonce(&data, &k, &nonce);
+        pbktOut = apr_bucket_heap_create(strlen(newBuff), new_bucket_size, apr_bucket_free, c->bucket_alloc);
         APR_BRIGADE_INSERT_TAIL(pbbOut,pbktOut);
         }
        	//So I don't think we can do this directly 
