@@ -76,14 +76,16 @@ static char *replace_nonce(const char *oldString, const char *key, const char *n
             }
             if(isNonceKey==0)
             {
+                char *temp = nonce;
                 index=index + (key_length);
-                apr_size_t k;
-                for(k = 0; k < size_nonce; k++)
+                apr_size_t k = 1;
+                for(temp=nonce; *temp; ++temp)
                 {
                     newBuff[n+k] = nonce[k];
                     size_newstring++;
+                    k++;
                 }
-                n = n + size_nonce;
+                n = n + (k + 1);
             }
         }
         newBuff[n] = *index;
@@ -190,7 +192,7 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
         buf = apr_bucket_alloc(len + nonce_length, c->bucket_alloc);
         buf = replace_nonce(data, nonce);
 
-        
+        git p
         pbktOut = apr_bucket_heap_create(buf, new_bucket_size, apr_bucket_free, c->bucket_alloc);
         APR_BRIGADE_INSERT_TAIL(pbbOut,pbktOut);
         }
