@@ -155,7 +155,6 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 /*	nonce = nonce_rand_gen();*/
 /*	printf(nonce);*/
 /*	free(nonce);*/
-    HelloConfig *hConfig = ap_get_module_config(r->server->module_config,&hello_filter_module);
 	const char *key = hConfig->key;
     char *index;
     for (index=key; *index; ++index)
