@@ -159,7 +159,7 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
     char *index;
     for (index=k; *index; ++index)
         ;
-    int key_length = index-key;
+    int key_length = index-k;
     for (index=nonce; *index; ++index)
         ;
     int nonce_length = index-nonce;
