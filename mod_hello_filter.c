@@ -133,7 +133,7 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
         apr_size_t new_bucket_size = len + (apr_size_t)(strlen(nonce));
         buf = apr_bucket_alloc(new_bucket_size, c->bucket_alloc);
 
-        for(n = 0; n < new_bucket_size; n++)
+        for(n = 0; n < len; n++)
         {
             if(strncmp(data[n], k[0], 1) == 0)
             {
