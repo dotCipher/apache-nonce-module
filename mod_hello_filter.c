@@ -39,7 +39,6 @@ const char *key;
 const char *nonce;
 } HelloConfig;
 
-apr_size_t new_bucket_size=0;
 char newBuff[4096];
 /*
 Not *totally* necessary, but this is useful for configuring parameters before our conf
@@ -78,7 +77,7 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 	
   //First, generate nonce
   // Also generate unique nonce in struct
-  const char *nonce=nonce_rand_gen();
+    const char *nonce=nonce_rand_gen();
     
 	//Grab the request object from the filter context	
 	request_rec *r = f->r;
@@ -94,19 +93,7 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 	//Let's allocate some space for our output bucket brigade
 	pbbOut=apr_brigade_create(r->pool, c->bucket_alloc);
 	
-	// MOVED TO STRUCT: Assign variable to use for nonce_gen
-/*	char *nonce;*/
-/*	nonce = nonce_rand_gen();*/
-/*	printf(nonce);*/
-/*	free(nonce);*/
 	const char *k = hConfig->key;
-    char *index;
-    for (index=k; *index; ++index)
-        ;
-    int key_length = index-k;
-    for (index=nonce; *index; ++index)
-        ;
-    int nonce_length = index-nonce;
 	
 	//add CSP headers
 	apr_table_t *headers= r->headers_out;
@@ -148,13 +135,24 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 
         for(n = 0; n < new_bucket_size; n++)
         {
-            if(strncmp(data[n], k, key_length) == 0)
+            if(strncmp(data[n], k[0], 1) == 0)
             {
-                apr_size_t i = 0;
-                for(i; i < nonce_length; i++)
+                int isKey = 0;
+                int j = 0;
+                for (j; j < strlen(k), j++)
                 {
-                    buf[i] = nonce[i];
+                    if(strncmp(data[n + j], k[j], 1) != 0)
+                        isKey = 1;
                 }
+                if(isKey == 0)
+                {
+                    apr_size_t i = 0;
+                    for(i; i < strlen(nonce); i++)
+                    {
+                        buf[i] = nonce[i];
+                    }
+                }
+
                 n++;
             }
             buf[n] = data[n];
