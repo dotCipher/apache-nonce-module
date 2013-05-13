@@ -38,8 +38,6 @@ int isEnabled;
 const char *key;
 const char *nonce;
 } HelloConfig;
-
-char newBuff[4096];
 /*
 Not *totally* necessary, but this is useful for configuring parameters before our conf
 file is read
@@ -130,34 +128,35 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
         apr_bucket_read(hbktIn,&data,&len,APR_BLOCK_READ);
 
         //Right now this filters output and converts all characters to upper case.
-        apr_size_t new_bucket_size = len + (apr_size_t)(strlen(nonce));
+        apr_size_t new_bucket_size = len + (apr_size_t)(strlen(nonce)) - (apr_size_t)strlen(k);
         buf = apr_bucket_alloc(new_bucket_size, c->bucket_alloc);
-
-        for(n = 0; n < len; n++)
+        apr_size_t new_index = 0;
+        apr_size_t i = 0;
+        for(i; i < new_bucket_size; i++)
         {
-            if(strncmp(data[n], k[0], 1) == 0)
-            {
-                int isKey = 0;
-                int j = 0;
-                for (j; j < strlen(k); j++)
+            if(strncmp(&str[i], key, 1) == 0)
                 {
-                    if(strncmp(data[n + j], k[j], 1) != 0)
-                        isKey = 1;
-                }
-                if(isKey == 0)
-                {
-                    apr_size_t i = 0;
-                    for(i; i < strlen(nonce); i++)
+                    int isKey = 0;
+                    int j = 0;
+                    for (j; j < strlen(key); j++)
                     {
-                        buf[i] = nonce[i];
+                        if(strncmp(&str[i + j], &key[j], 1) != 0)
+                            isKey = 1;
                     }
-                }
-
-                n++;
+                    if(isKey == 0)
+                    {
+                        int n = 0;
+                        i = i + strlen(key);
+                        for(n; n < strlen(nonce); n++)
+                        {
+                            buf[new_index] = nonce[n];
+                            new_index++;
+                        }
+                    }
             }
-            buf[n] = data[n];
+            buf[new_index] = data[i];
+            new_index++;
         }
-
         pbktOut = apr_bucket_heap_create(buf, new_bucket_size, apr_bucket_free, c->bucket_alloc);
         APR_BRIGADE_INSERT_TAIL(pbbOut,pbktOut);
         }
