@@ -61,6 +61,12 @@ static void HelloFilterInsertFilter(request_rec *r)
 	ap_add_output_filter(s_szHelloFilterName, NULL, r,r->connection);
 }
 
+typedef struct {
+   // apr_pool_t *tpool;
+	//to make nonce consistent across brigades
+	const char *nonce;
+} csp_policy_mod_ctx;
+
 /*
 This will be where our filter logic goes
 */
@@ -72,10 +78,7 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 		brigade to be our header, and then iterate through the buckets in the brigade
 		to find "<script>" tags.
 	*/
-	
-  //First, generate nonce
-  // Also generate unique nonce in struct
-    const char *nonce=nonce_rand_gen();
+	csp_policy_mod_ctx *ctx = f->ctx;
     
 	//Grab the request object from the filter context	
 	request_rec *r = f->r;
@@ -93,18 +96,28 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 	
 	const char *k = hConfig->key;
 	
-	//add CSP headers
-	apr_table_t *headers= r->headers_out;
-	//char *val= (char*)malloc((sizeof("script-nonce ") + sizeof(nonce)) * sizeof('a'));
-	//char *script= "script-nonce ";
-	//sprintf(val, "%s%s", "script-nonce ", nonce);
-	//currently this is the only one being supported
-	apr_table_setn(headers, "X-WebKit-CSP", apr_pstrcat(c->pool, "script-nonce ", nonce, NULL));
-	//might be useful with future support for script-nonce
-	apr_table_setn(headers, "Content-Security-Policy", apr_pstrcat(c->pool, "script-nonce ", nonce, NULL));
-	apr_table_setn(headers, "X-Content-Security-Policy", apr_pstrcat(c->pool, "script-nonce ", nonce, NULL));
-	//free(val);
 
+	if (!ctx) {
+		
+  		 f->ctx = ctx = apr_pcalloc(f->r->pool, sizeof(*ctx));
+	
+		//generate nonce for this connection
+		ctx->nonce=nonce_rand_gen();
+		//add CSP headers
+		apr_table_t *headers= r->headers_out;
+		//char *val= (char*)malloc((sizeof("script-nonce ") + sizeof(nonce)) * sizeof('a'));
+		//char *script= "script-nonce ";
+		//sprintf(val, "%s%s", "script-nonce ", nonce);
+		//currently this is the only one being supported
+		apr_table_setn(headers, "X-WebKit-CSP", apr_pstrcat(c->pool, "script-nonce ", ctx->nonce, NULL));
+		//might be useful with future support for script-nonce
+		apr_table_setn(headers, "Content-Security-Policy", apr_pstrcat(c->pool, "script-nonce ", ctx->nonce, NULL));
+		apr_table_setn(headers, "X-Content-Security-Policy", apr_pstrcat(c->pool, "script-nonce ", ctx->nonce, NULL));
+		apr_table_unset(f->r->headers_out, "Content-Length");
+		//free(val);
+		 //First, generate nonce
+}
+	const char *nonce=ctx->nonce;
 	//Assign the current bucket to hbktIn (this will always be the case unless there are
 	//no more buckets bc we remove them from the incoming bucket brigade each iteration)
 	   for (hbktIn = APR_BRIGADE_FIRST(pbbIn);
@@ -129,11 +142,12 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
         apr_bucket_read(hbktIn,&data,&len,APR_BLOCK_READ);
 
         //Right now this filters output and converts all characters to upper case.
-        apr_size_t new_bucket_size = len + (apr_size_t)(strlen(nonce)) - (apr_size_t)strlen(k);
-        buf = apr_bucket_alloc(new_bucket_size, c->bucket_alloc);
+		  int worst = (strlen(nonce))/ strlen(k); worst++;
+        apr_size_t new_bucket_size = len;//
+        buf = apr_bucket_alloc(len * worst, c->bucket_alloc);
         apr_size_t new_index = 0;
         apr_size_t i = 0;
-        for(i; i < new_bucket_size; i++)
+        for(i; i < len; i++)
         {
             if(strncmp(&data[i], k, 1) == 0)
                 {
@@ -147,6 +161,7 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
                     if(isKey == 0)
                     {
                         int n = 0;
+								new_bucket_size+= (apr_size_t)(strlen(nonce)) - (apr_size_t)strlen(k);
                         i = i + strlen(k);
                         for(n; n < strlen(nonce); n++)
                         {
@@ -165,7 +180,8 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
         //Possibly need to create a bucket and insert at the head?  Not sure
        //apr_table_set(r->headers_out, "Script-Nonce", nonce);
     apr_brigade_cleanup(pbbIn);
-    return ap_pass_brigade(f->next,pbbOut);
+    ap_pass_brigade(f->next,pbbOut);
+	 return APR_SUCCESS;
     }
 /*
 Function to grab the script nonce key from the .conf file for mod_hello_filter
