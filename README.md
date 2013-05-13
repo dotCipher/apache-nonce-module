@@ -21,6 +21,6 @@ Requirements
 Compilation
 ======
 
-- apxs2 -cia -lgmp \`libgcrypt-config --cflags --libs\` mod_hello_filter.c nonce_gen/nonce_rand.c
+- apxs2 -cia -lgmp \`libgcrypt-config --cflags --libs\` mod_nonce_filter.c nonce_gen/nonce_rand.c
 - (Note for this to work you need to have GMP and LibGCrypt installed)
 
