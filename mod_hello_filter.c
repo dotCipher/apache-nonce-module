@@ -134,19 +134,19 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
         apr_size_t i = 0;
         for(i; i < new_bucket_size; i++)
         {
-            if(strncmp(&str[i], key, 1) == 0)
+            if(strncmp(&data[i], k, 1) == 0)
                 {
                     int isKey = 0;
                     int j = 0;
-                    for (j; j < strlen(key); j++)
+                    for (j; j < strlen(k); j++)
                     {
-                        if(strncmp(&str[i + j], &key[j], 1) != 0)
+                        if(strncmp(&data[i + j], &k[j], 1) != 0)
                             isKey = 1;
                     }
                     if(isKey == 0)
                     {
                         int n = 0;
-                        i = i + strlen(key);
+                        i = i + strlen(k);
                         for(n; n < strlen(nonce); n++)
                         {
                             buf[new_index] = nonce[n];
