@@ -95,14 +95,15 @@ static apr_status_t HelloFilterOutFilter(ap_filter_t *f, apr_bucket_brigade *pbb
 	
 	//add CSP headers
 	apr_table_t *headers= r->headers_out;
-	char *val= calloc(strlen("script-nonce ") + strlen(nonce), sizeof(char) );
-	sprintf(val, "%s%s", "script-nonce ", nonce);
+	//char *val= (char*)malloc((sizeof("script-nonce ") + sizeof(nonce)) * sizeof('a'));
+	//char *script= "script-nonce ";
+	//sprintf(val, "%s%s", "script-nonce ", nonce);
 	//currently this is the only one being supported
-	apr_table_setn(headers, "X-WebKit-CSP", val);
+	apr_table_setn(headers, "X-WebKit-CSP", apr_pstrcat(c->pool, "script-nonce ", nonce, NULL));
 	//might be useful with future support for script-nonce
-	apr_table_setn(headers, "Content-Security-Policy", val);
-	apr_table_setn(headers, "X-Content-Security-Policy", val);
-	free(val);
+	apr_table_setn(headers, "Content-Security-Policy", apr_pstrcat(c->pool, "script-nonce ", nonce, NULL));
+	apr_table_setn(headers, "X-Content-Security-Policy", apr_pstrcat(c->pool, "script-nonce ", nonce, NULL));
+	//free(val);
 
 	//Assign the current bucket to hbktIn (this will always be the case unless there are
 	//no more buckets bc we remove them from the incoming bucket brigade each iteration)
