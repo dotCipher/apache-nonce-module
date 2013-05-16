@@ -1,0 +1,3 @@
+ab -kc 10 -n 10000 -g ~/Desktop/Apache_Project/Benchmarks/Localhost/apbenchmark_w-Nonce/sn_benchmark.dat -e ~/Desktop/Apache_Project/Benchmarks/Localhost/apbenchmark_w-Nonce/sn_benchmark.csv http://127.0.0.1/index.hrml > ~/Desktop/Apache_Project/Benchmarks/Localhost/apbenchmark_w-Nonce/sn_benchmark_OUTPUT.txt
+gnuplot ./plot.p
+
